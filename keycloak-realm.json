@@ -1,0 +1,85 @@
+{
+  "realm": "gatekeeper-realm",
+  "displayName": "Model Release Gatekeeper Realm",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "viewer",
+        "description": "Read-only access to evaluation results, audit logs, and release manifests"
+      },
+      {
+        "name": "analyst",
+        "description": "ML Engineer / Analyst access to register models and execute benchmark evaluations"
+      },
+      {
+        "name": "admin",
+        "description": "Release Manager / Admin access to manage policies, sign approvals, and issue manifests"
+      }
+    ]
+  },
+  "groups": [],
+  "clients": [
+    {
+      "clientId": "gatekeeper-client",
+      "name": "Model Release Gatekeeper Web App",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://127.0.0.1:5173/*##http://localhost:5173/*"
+      },
+      "redirectUris": [
+        "http://127.0.0.1:5173/*",
+        "http://localhost:5173/*",
+        "http://127.0.0.1:8000/*"
+      ],
+      "webOrigins": [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "+"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "role_list",
+        "profile",
+        "roles",
+        "email"
+      ]
+    }
+  ],
+  "identityProviders": [
+    {
+      "alias": "enterprise-saml-idp",
+      "displayName": "Enterprise SAML Broker",
+      "providerId": "saml",
+      "enabled": false,
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "nameIDPolicyFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+        "singleSignOnServiceUrl": "https://idp.example.com/saml/sso",
+        "singleLogoutServiceUrl": "https://idp.example.com/saml/slo",
+        "signatureAlgorithm": "RSA_SHA256",
+        "wantAuthnRequestsSigned": "true",
+        "wantAssertionsSigned": "true",
+        "wantAssertionsEncrypted": "false",
+        "entityId": "gatekeeper-saml-sp",
+        "validateSignature": "true"
+      }
+    }
+  ]
+}
