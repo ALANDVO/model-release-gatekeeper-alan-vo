@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "model-release-gatekeeper-alan-vo",
+  "owner": "ALANDVO",
+  "email": "alanvo@gmail.com",
+  "domain": "mlops",
+  "summary": "Evaluate model release candidates against configurable metric thresholds, record approvals and export signed-off release manifests.",
+  "workflows": [
+    "Evaluate model candidate benchmark metrics against release policy gates",
+    "Perform dual-stakeholder review and cryptographic approval signing",
+    "Export verifiable tamper-evident release manifests with model lineage"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "version": "1.0.0"
+}

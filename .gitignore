@@ -1,0 +1,30 @@
+# Python virtual environments & bytecode
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+
+# Node & Frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+.vite/
+
+# Environment variables & Databases
+.env
+*.db
+*.sqlite
+*.sqlite3
+
+# Local agent metadata
+.antigravitycli/
+.omp/
