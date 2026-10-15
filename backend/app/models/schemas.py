@@ -230,6 +230,29 @@ class AuditLogResponse(BaseModel):
     actor_role: str
     details: Dict[str, Any]
     timestamp: datetime
+class CandidateBundleExport(BaseModel):
+    """Complete candidate bundle for portability across environments."""
+    schema_version: str = "1.0.0"
+    exported_at: datetime
+    exported_by: str
+    candidate: CandidateResponse
+    evaluations: List[EvaluationResponse]
+    approvals: List[ApprovalResponse]
+    manifests: List[ManifestResponse]
+
+
+class CandidateBundleImport(BaseModel):
+    """Import request for candidate bundle."""
+    bundle: CandidateBundleExport
+    import_as_new: bool = Field(default=True, description="If true, create new candidate with new ID; if false, attempt to update existing by name/version")
+
+
+class CandidateBundleImportResponse(BaseModel):
+    candidate_id: str
+    imported_evaluations: int
+    imported_approvals: int
+    imported_manifests: int
+    message: str
 
 
 class AuditLogListResponse(BaseModel):

@@ -7,8 +7,12 @@ from sqlalchemy import or_
 from app.core.database import get_db
 from app.core.security import require_role, AuthenticatedUser
 from app.models.models import Candidate
-from app.models.schemas import CandidateCreate, CandidateUpdate, CandidateResponse, CandidateListResponse
+from app.models.schemas import (
+    CandidateCreate, CandidateUpdate, CandidateResponse, CandidateListResponse,
+    CandidateBundleExport, CandidateBundleImport, CandidateBundleImportResponse
+)
 from app.services.audit_service import AuditService
+from app.services.bundle_service import BundleService
 
 router = APIRouter(prefix="/api/candidates", tags=["candidates"])
 
@@ -75,6 +79,26 @@ def get_candidate(candidate_id: str, db: Session = Depends(get_db), user: Authen
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     return candidate_to_response(candidate)
+
+
+@router.get("/{candidate_id}/bundle", response_model=CandidateBundleExport)
+def export_candidate_bundle(
+    candidate_id: str,
+    db: Session = Depends(get_db),
+    user: AuthenticatedUser = Depends(require_role("viewer")),
+):
+    """Export complete candidate bundle with evaluations, approvals, and manifests."""
+    return BundleService.export_bundle(db, candidate_id, user.username, user.role)
+
+
+@router.post("/import", response_model=CandidateBundleImportResponse, status_code=status.HTTP_201_CREATED)
+def import_candidate_bundle(
+    import_req: CandidateBundleImport,
+    db: Session = Depends(get_db),
+    user: AuthenticatedUser = Depends(require_role("analyst")),
+):
+    """Import a candidate bundle, creating new candidate and related records."""
+    return BundleService.import_bundle(db, import_req, user.username, user.role)
 
 
 @router.patch("/{candidate_id}", response_model=CandidateResponse)

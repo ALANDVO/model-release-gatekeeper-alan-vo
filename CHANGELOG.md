@@ -1,9 +1,21 @@
 # Changelog
 
+## 1.1.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.0] - 2026-10-15
+
+### Added
+- Candidate bundle export/import for environment portability: export complete candidate records (evaluations, approvals, manifests) as signed JSON bundles and import them into new environments with automatic ID remapping and conflict resolution
+- New API endpoints: `GET /api/candidates/{id}/bundle` (viewer+) and `POST /api/candidates/import` (analyst+).
+- BundleManager UI component integrated into CandidateDetail for one-click export/download and paste-to-import workflows.
+- Backend test coverage for bundle round-trip including audit trail verification (BUNDLE_EXPORTED, BUNDLE_IMPORTED actions).
 
 ## [1.0.0] - 2026-10-08
 

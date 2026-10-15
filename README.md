@@ -1,6 +1,9 @@
 # Model Release Gatekeeper | Alan Vo | AI & Machine Learning
 
-Current version: `1.0.0`.
+> Work in progress. This checkpoint may be incomplete or fail tests. See PLAN.md and STATUS.md before use.
+
+
+ Current version: `1.1.0`.
 
 Deploying machine learning models and large language models without systematic gating introduces catastrophic quality, safety, and operational regressions into production environments. **Model Release Gatekeeper** delivers an automated, deterministic release evaluation platform for MLOps engineers, alignment leads, and release managers. Candidate model checkpoints and metadata are systematically evaluated against configurable multi-metric policy gates (reasoning accuracy, factual hallucination rate, toxicity bounds, fairness disparity, and inference latency), transitioned through multi-stakeholder approval workflows, and exported into verifiable, tamper-evident release manifests backed by canonical SHA-256 digests and digital signatures.
 
@@ -41,7 +44,7 @@ Model Release Gatekeeper includes a reproducible offline benchmark suite for ver
 Run the benchmark suite locally using the repository environment:
 
 ```bash
-python3 backend/eval_benchmark.py
+python3 backend/tests/benchmark.py
 ```
 
 ### Data Provenance
@@ -124,6 +127,8 @@ All LLM errors undergo credential redaction to prevent secret leakage in logs an
 | `/api/candidates` | GET | Viewer+ | List candidates with pagination and filters |
 | `/api/candidates` | POST | Analyst+ | Register new model release candidate |
 | `/api/candidates/{id}` | GET | Viewer+ | Retrieve candidate details |
+| `/api/candidates/{id}/bundle` | GET | Viewer+ | Export complete candidate bundle with evaluations, approvals, manifests |
+| `/api/candidates/import` | POST | Analyst+ | Import candidate bundle with automatic ID remapping |
 | `/api/policies` | GET | Viewer+ | List release gating policies |
 | `/api/policies` | POST | Admin | Create custom release policy |
 | `/api/evaluations` | POST | Analyst+ | Execute policy evaluation against candidate metrics |
