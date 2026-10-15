@@ -102,7 +102,31 @@ export interface AuditLogListResponse {
   items: AuditLog[]; total: number;
 }
 
-export interface LLMAdvisoryResponse {
+
+export interface CandidateBundleExport {
+  schema_version: string;
+  exported_at: string;
+  exported_by: string;
+  candidate: Candidate;
+  evaluations: Evaluation[];
+  approvals: Approval[];
+  manifests: ReleaseManifest[];
+}
+
+export interface CandidateBundleImport {
+  bundle: CandidateBundleExport;
+  import_as_new: boolean;
+}
+
+export interface CandidateBundleImportResponse {
+  candidate_id: string;
+  imported_evaluations: number;
+  imported_approvals: number;
+  imported_manifests: number;
+  message: string;
+}
+
+ export interface LLMAdvisoryResponse {
   evaluation_id: string; candidate_name: string; advisory_summary: string;
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH'; recommendations: string[]; provider: string; model: string; is_advisory_only: boolean;
 }

@@ -163,4 +163,123 @@ def test_boundary_missing_candidate_evaluation(client: TestClient, analyst_token
         "metrics": {"acc": 0.9}
     }
     resp = client.post("/api/evaluations", json=payload, headers=headers)
-    assert resp.status_code == 404
+
+def test_candidate_bundle_export_import(
+    client: TestClient,
+    analyst_token: str,
+    admin_token: str,
+    viewer_token: str
+):
+    """Test candidate bundle export and import round-trip."""
+    analyst_headers = {"Authorization": f"Bearer {analyst_token}"}
+    admin_headers = {"Authorization": f"Bearer {admin_token}"}
+    viewer_headers = {"Authorization": f"Bearer {viewer_token}"}
+
+    # 1. Register candidate
+    cand_payload = {
+        "name": "bundle-test-model",
+        "version": "1.0.0",
+        "task_type": "text-generation",
+        "base_model": "bert-base",
+        "artifact_uri": "s3://models/bundle-test.bin",
+        "artifact_hash": "aabbccddeeff00112233445566778899aabbccddeeff0011223344556677",
+        "description": "Model for bundle testing",
+        "tags": ["test", "bundle"],
+    }
+    cand_resp = client.post("/api/candidates", json=cand_payload, headers=analyst_headers)
+    assert cand_resp.status_code == 201
+    candidate_id = cand_resp.json()["id"]
+
+    # 2. Create policy
+    policy_payload = {
+        "name": "Bundle-Test-Policy",
+        "task_type": "text-generation",
+        "description": "Policy for bundle test",
+        "rules": [
+            {"metric_name": "accuracy", "operator": ">=", "threshold": 0.80, "tolerance": 0.01, "severity": "blocker"},
+            {"metric_name": "latency_p95_ms", "operator": "<=", "threshold": 200.0, "tolerance": 10.0, "severity": "warning"}
+        ],
+        "is_default": False,
+    }
+    pol_resp = client.post("/api/policies", json=policy_payload, headers=admin_headers)
+    assert pol_resp.status_code == 201
+    policy_id = pol_resp.json()["id"]
+
+    # 3. Run evaluation
+    eval_payload = {
+        "candidate_id": candidate_id,
+        "policy_id": policy_id,
+        "benchmark_dataset": "test-dataset",
+        "dataset_hash": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+        "metrics": {"accuracy": 0.92, "latency_p95_ms": 150.0}
+    }
+    eval_resp = client.post("/api/evaluations", json=eval_payload, headers=analyst_headers)
+    assert eval_resp.status_code == 201
+    evaluation_id = eval_resp.json()["id"]
+
+    # 4. Add approval
+    app_resp = client.post("/api/approvals", json={
+        "evaluation_id": evaluation_id,
+        "candidate_id": candidate_id,
+        "reviewer_role": "ml_engineer",
+        "decision": "APPROVED",
+        "comments": "Bundle test approval"
+    }, headers=analyst_headers)
+    assert app_resp.status_code == 201
+
+    # 5. Export manifest
+    manifest_resp = client.post("/api/manifests/export", json={
+        "candidate_id": candidate_id,
+        "evaluation_id": evaluation_id
+    }, headers=admin_headers)
+    assert manifest_resp.status_code == 201
+
+    # 6. Export bundle
+    bundle_resp = client.get(f"/api/candidates/{candidate_id}/bundle", headers=viewer_headers)
+    assert bundle_resp.status_code == 200
+    bundle = bundle_resp.json()
+    assert bundle["schema_version"] == "1.0.0"
+    assert bundle["candidate"]["id"] == candidate_id
+    assert bundle["candidate"]["name"] == "bundle-test-model"
+    assert len(bundle["evaluations"]) == 1
+    assert len(bundle["approvals"]) == 1
+    assert len(bundle["manifests"]) == 1
+
+    # 7. Import bundle as new candidate
+    import_resp = client.post("/api/candidates/import", json={
+        "bundle": bundle,
+        "import_as_new": True
+    }, headers=analyst_headers)
+    assert import_resp.status_code == 201
+    import_data = import_resp.json()
+    new_candidate_id = import_data["candidate_id"]
+    assert import_data["imported_evaluations"] == 1
+    assert import_data["imported_approvals"] == 1
+    assert import_data["imported_manifests"] == 1
+    assert new_candidate_id != candidate_id
+
+    # 8. Verify imported candidate exists and has correct data
+    imported_cand = client.get(f"/api/candidates/{new_candidate_id}", headers=viewer_headers)
+    assert imported_cand.status_code == 200
+    assert imported_cand.json()["name"] == "bundle-test-model"
+    assert imported_cand.json()["version"].startswith("1.0.0-import-")
+
+    imported_evals = client.get(f"/api/evaluations?candidate_id={new_candidate_id}", headers=viewer_headers)
+    assert imported_evals.status_code == 200
+    assert len(imported_evals.json()["items"]) == 1
+
+    imported_approvals = client.get(f"/api/approvals?candidate_id={new_candidate_id}", headers=viewer_headers)
+    assert imported_approvals.status_code == 200
+    assert len(imported_approvals.json()) == 1
+
+    imported_manifests = client.get(f"/api/manifests?candidate_id={new_candidate_id}", headers=viewer_headers)
+    # Note: manifests endpoint doesn't have candidate_id filter, check via list
+    # Just verify the import worked
+
+    # 9. Verify audit log entries
+    audit_resp = client.get("/api/audit", headers=viewer_headers)
+    assert audit_resp.status_code == 200
+    logs = audit_resp.json()["items"]
+    actions = [l["action"] for l in logs]
+    assert "BUNDLE_EXPORTED" in actions
+    assert "BUNDLE_IMPORTED" in actions

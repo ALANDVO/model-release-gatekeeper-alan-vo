@@ -3,6 +3,7 @@ import {
   CandidateListResponse, Policy, PolicyCreate, Evaluation, EvaluationCreate,
   EvaluationListResponse, Approval, ApprovalCreate, ReleaseManifest,
   ManifestVerifyRequest, ManifestVerifyResponse, AuditLogListResponse, LLMAdvisoryResponse,
+  CandidateBundleExport, CandidateBundleImport, CandidateBundleImportResponse,
 } from './types';
 
 let inMemoryToken: string | null = null;
@@ -43,6 +44,9 @@ export const api = {
   createCandidate: (data: CandidateCreate) => request<Candidate>('/api/candidates', { method: 'POST', body: JSON.stringify(data) }),
   updateCandidate: (id: string, data: CandidateUpdate) => request<Candidate>(`/api/candidates/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteCandidate: (id: string) => request<void>(`/api/candidates/${id}`, { method: 'DELETE' }),
+
+  exportCandidateBundle: (id: string) => request<CandidateBundleExport>(`/api/candidates/${id}/bundle`),
+  importCandidateBundle: (data: CandidateBundleImport) => request<CandidateBundleImportResponse>('/api/candidates/import', { method: 'POST', body: JSON.stringify(data) }),
 
   listPolicies: (task_type?: string) => request<Policy[]>(`/api/policies${task_type ? `?task_type=${encodeURIComponent(task_type)}` : ''}`),
   getPolicy: (id: string) => request<Policy>(`/api/policies/${id}`),
