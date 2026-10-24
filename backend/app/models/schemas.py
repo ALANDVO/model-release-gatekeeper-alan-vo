@@ -213,12 +213,32 @@ class LLMAdvisoryResponse(BaseModel):
     evaluation_id: str
     candidate_name: str
     advisory_summary: str
-    risk_level: str
+    risk_level: Literal["LOW", "MEDIUM", "HIGH"]
     recommendations: List[str]
     provider: str
     model: str
     is_advisory_only: bool = True
 
+
+class BenchmarkRunRequest(BaseModel):
+    """Request to run built-in benchmark (optional future parameters)."""
+    pass
+
+
+class BenchmarkRunResponse(BaseModel):
+    """Response from built-in benchmark execution."""
+    candidate_id: str
+    candidate_name: str
+    evaluation_id: str
+    benchmark_dataset: str
+    dataset_hash: str
+    candidate_metrics: Dict[str, float]
+    baseline_metrics: Dict[str, float]
+    gate_verdict: str
+    readiness_score: float
+    summary: str
+    rule_results: List[Dict[str, Any]]
+    executed_by: str
 
 class AuditLogResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
