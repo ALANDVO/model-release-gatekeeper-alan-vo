@@ -130,3 +130,21 @@ export interface CandidateBundleImportResponse {
   evaluation_id: string; candidate_name: string; advisory_summary: string;
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH'; recommendations: string[]; provider: string; model: string; is_advisory_only: boolean;
 }
+export interface BenchmarkRunRequest {
+  // Empty for now, can add parameters later
+}
+
+export interface BenchmarkRunResponse {
+  candidate_id: string;
+  candidate_name: string;
+  evaluation_id: string;
+  benchmark_dataset: string;
+  dataset_hash: string;
+  candidate_metrics: Record<string, number>;
+  baseline_metrics: Record<string, number>;
+  gate_verdict: GateVerdict;
+  readiness_score: number;
+  summary: string;
+  rule_results: RuleEvaluationResult[];
+  executed_by: string;
+}

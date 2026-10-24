@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { Candidate, Evaluation, Approval, ReleaseManifest } from '../api/types';
+import { Candidate, Evaluation, Approval, ReleaseManifest, BenchmarkRunResponse } from '../api/types';
 import { EvaluationRunner } from './EvaluationRunner';
 import { ApprovalSignoffModal } from './ApprovalSignoffModal';
 import { LLMAdvisoryPanel } from './LLMAdvisoryPanel';
@@ -16,8 +16,9 @@ export const CandidateDetail: React.FC<{ candidateId: string; onBack: () => void
   const [error, setError] = useState<string | null>(null);
   const [isEvalOpen, setIsEvalOpen] = useState(false);
   const [isSignoffOpen, setIsSignoffOpen] = useState(false);
+  const [isBenchmarkOpen, setIsBenchmarkOpen] = useState(false);
   const [activeEval, setActiveEval] = useState<Evaluation | null>(null);
-
+  const [benchmarkResult, setBenchmarkResult] = useState<BenchmarkRunResponse | null>(null);
   const loadData = async () => {
     setLoading(true);
     try {
@@ -51,6 +52,21 @@ export const CandidateDetail: React.FC<{ candidateId: string; onBack: () => void
     }
   };
 
+  const handleRunBenchmark = async () => {
+    if (!candidate) return;
+    setIsBenchmarkOpen(true);
+    setError(null);
+    try {
+      const result = await api.runBenchmark(candidate.id);
+      setBenchmarkResult(result);
+      setIsBenchmarkOpen(false);
+      await loadData(); // Refresh to show new evaluation
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
+      setIsBenchmarkOpen(false);
+    }
+  };
+
   if (loading) return <div className="card" style={{ padding: '3rem', textAlign: 'center' }}>Loading candidate...</div>;
   if (!candidate) return <div className="card" style={{ padding: '3rem', textAlign: 'center' }}>Candidate not found.</div>;
 
@@ -73,6 +89,7 @@ export const CandidateDetail: React.FC<{ candidateId: string; onBack: () => void
           {user?.role !== 'viewer' && <button className="btn btn-secondary btn-sm" onClick={() => setIsEvalOpen(true)}>Run Evaluation</button>}
           {activeEval && user?.role !== 'viewer' && <button className="btn btn-secondary btn-sm" onClick={() => setIsSignoffOpen(true)}>Sign-Off</button>}
           {activeEval && user?.role === 'admin' && <button className="btn btn-primary btn-sm" onClick={handleExportManifest}>Export Manifest</button>}
+          {user?.role !== 'viewer' && <button className="btn btn-primary btn-sm" onClick={handleRunBenchmark}>Run AI Safety Benchmark</button>}
         </div>
       </div>
 
@@ -144,6 +161,47 @@ export const CandidateDetail: React.FC<{ candidateId: string; onBack: () => void
         </div>
       )}
 
+      {benchmarkResult && (
+        <div className="card" style={{ border: '1px solid var(--accent-blue)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>AI Safety Benchmark Results</h2>
+            <span className={`badge ${benchmarkResult.gate_verdict === 'APPROVED_FOR_RELEASE' ? 'badge-green' : benchmarkResult.gate_verdict === 'NEEDS_REVIEW' ? 'badge-yellow' : 'badge-red'}`}>
+              {benchmarkResult.gate_verdict} ({benchmarkResult.readiness_score}%)
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginTop: '1rem' }}>
+            <div>
+              <strong>Candidate Metrics</strong>
+              <pre style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>{JSON.stringify(benchmarkResult.candidate_metrics, null, 2)}</pre>
+            </div>
+            <div>
+              <strong>Baseline Metrics (distilbert-safety-baseline)</strong>
+              <pre style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>{JSON.stringify(benchmarkResult.baseline_metrics, null, 2)}</pre>
+            </div>
+          </div>
+          <div style={{ marginTop: '1rem' }}>
+            <strong>Rule Results</strong>
+            <table>
+              <thead><tr><th>Metric</th><th>Operator</th><th>Threshold</th><th>Actual</th><th>Severity</th><th>Status</th></tr></thead>
+              <tbody>
+                {benchmarkResult.rule_results.map((r, i) => (
+                  <tr key={i}>
+                    <td><strong>{r.metric_name}</strong></td>
+                    <td><code>{r.operator}</code></td>
+                    <td>{r.threshold}</td>
+                    <td><strong>{r.actual_value ?? 'N/A'}</strong></td>
+                    <td><span className={`badge ${r.severity === 'blocker' ? 'badge-red' : 'badge-yellow'}`}>{r.severity}</span></td>
+                    <td><span className={`badge ${r.passed ? 'badge-green' : 'badge-red'}`}>{r.passed ? 'PASS' : 'FAIL'}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ marginTop: '1rem', padding: '0.5rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '0.375rem' }}>
+            <strong>Summary:</strong> {benchmarkResult.summary}
+          </div>
+        </div>
+      )}
       <EvaluationRunner
         candidate={candidate}
         isOpen={isEvalOpen}

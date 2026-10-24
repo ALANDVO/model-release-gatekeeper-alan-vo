@@ -4,6 +4,7 @@ import {
   EvaluationListResponse, Approval, ApprovalCreate, ReleaseManifest,
   ManifestVerifyRequest, ManifestVerifyResponse, AuditLogListResponse, LLMAdvisoryResponse,
   CandidateBundleExport, CandidateBundleImport, CandidateBundleImportResponse,
+  BenchmarkRunRequest, BenchmarkRunResponse,
 } from './types';
 
 let inMemoryToken: string | null = null;
@@ -57,6 +58,7 @@ export const api = {
   listEvaluations: (candidate_id?: string) => request<EvaluationListResponse>(`/api/evaluations${candidate_id ? `?candidate_id=${encodeURIComponent(candidate_id)}` : ''}`),
   getEvaluation: (id: string) => request<Evaluation>(`/api/evaluations/${id}`),
   getLLMAdvisory: (evaluationId: string) => request<LLMAdvisoryResponse>(`/api/evaluations/${evaluationId}/advisory`, { method: 'POST', body: JSON.stringify({ evaluation_id: evaluationId }) }),
+  runBenchmark: (candidateId: string) => request<BenchmarkRunResponse>(`/api/evaluations/${candidateId}/benchmark`, { method: 'POST', body: JSON.stringify({}) }),
 
   recordApproval: (data: ApprovalCreate) => request<Approval>('/api/approvals', { method: 'POST', body: JSON.stringify(data) }),
   listApprovals: (candidateId?: string) => request<Approval[]>(`/api/approvals${candidateId ? `?candidate_id=${encodeURIComponent(candidateId)}` : ''}`),
