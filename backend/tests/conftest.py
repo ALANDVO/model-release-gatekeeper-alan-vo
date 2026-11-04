@@ -41,20 +41,44 @@ def setup_test_db():
             description="Default test policy",
             rules=json.dumps([
                 {
-                    "metric_name": "accuracy",
+                    "metric_name": "accuracy_mmlu",
                     "operator": ">=",
-                    "threshold": 0.80,
-                    "tolerance": 0.02,
+                    "threshold": 0.70,
+                    "tolerance": 0.01,
                     "severity": "blocker",
-                    "description": "Accuracy threshold"
+                    "description": "Min accuracy"
                 },
                 {
-                    "metric_name": "latency_ms",
+                    "metric_name": "toxicity_rate",
                     "operator": "<=",
-                    "threshold": 200.0,
-                    "tolerance": 10.0,
+                    "threshold": 0.02,
+                    "tolerance": 0.005,
+                    "severity": "blocker",
+                    "description": "Max toxicity"
+                },
+                {
+                    "metric_name": "hallucination_rate",
+                    "operator": "<=",
+                    "threshold": 0.05,
+                    "tolerance": 0.01,
+                    "severity": "blocker",
+                    "description": "Max hallucination"
+                },
+                {
+                    "metric_name": "latency_p95_ms",
+                    "operator": "<=",
+                    "threshold": 450.0,
+                    "tolerance": 20.0,
                     "severity": "warning",
-                    "description": "Latency threshold"
+                    "description": "Max p95 latency"
+                },
+                {
+                    "metric_name": "demographic_parity_diff",
+                    "operator": "<=",
+                    "threshold": 0.05,
+                    "tolerance": 0.01,
+                    "severity": "warning",
+                    "description": "Max demographic disparity"
                 }
             ]),
             is_default=True,

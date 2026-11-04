@@ -5,12 +5,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import require_role, AuthenticatedUser
-from app.models.models import Evaluation, Candidate
+from app.models.models import Evaluation, Candidate, Policy
 from app.models.schemas import EvaluationCreate, EvaluationResponse, EvaluationListResponse, RuleEvaluationResult, LLMAdvisoryRequest, LLMAdvisoryResponse
 from app.services.evaluation_service import EvaluationService
 from app.services.llm_service import LLMService
 from app.models.schemas import EvaluationCreate, EvaluationResponse, EvaluationListResponse, RuleEvaluationResult, LLMAdvisoryRequest, LLMAdvisoryResponse, BenchmarkRunRequest, BenchmarkRunResponse
-from app.models.models import Policy
+from app.services.gate_engine import GateEngine
+from app.models.schemas import GateRule
+
+
+router = APIRouter(prefix="/api/evaluations", tags=["evaluations"])
 
 
 def run_builtin_benchmark(candidate_id: str, db: Session) -> tuple:

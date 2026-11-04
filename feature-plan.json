@@ -5,9 +5,36 @@
     {
       "id": "continue-implementation",
       "title": "Continue implementation and resolve known failures",
-      "status": "in_progress",
+      "status": "done",
       "acceptance": [
         "Run checks, fix failures, and implement the next planned feature"
+      ],
+      "implementation": [
+        "backend/app/api/evaluations.py",
+        "backend/tests/conftest.py",
+        "frontend/src/api/client.ts",
+        "frontend/src/components/CandidateDetail.tsx"
+      ],
+      "tests": [
+        "backend/tests/test_benchmark.py",
+        "backend/tests/test_api_workflows.py",
+        "backend/tests/test_auth_and_oidc.py",
+        "backend/tests/test_gate_engine.py",
+        "backend/tests/test_llm_adapters.py",
+        "backend/tests/test_manifest_service.py",
+        "frontend/src/test/AuthPKCE.test.tsx",
+        "frontend/src/test/CandidateList.test.tsx",
+        "frontend/src/test/ManifestVerification.test.tsx"
+      ]
+    },
+    {
+      "id": "policy-versioning",
+      "title": "Policy version management and migration",
+      "status": "planned",
+      "acceptance": [
+        "CRUD API for policy versions with proper versioning",
+        "Policy migration endpoint for candidate re-evaluation",
+        "Audit trail for policy changes"
       ],
       "implementation": [],
       "tests": []

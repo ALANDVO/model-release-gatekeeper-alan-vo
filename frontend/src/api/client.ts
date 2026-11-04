@@ -4,7 +4,7 @@ import {
   EvaluationListResponse, Approval, ApprovalCreate, ReleaseManifest,
   ManifestVerifyRequest, ManifestVerifyResponse, AuditLogListResponse, LLMAdvisoryResponse,
   CandidateBundleExport, CandidateBundleImport, CandidateBundleImportResponse,
-  BenchmarkRunRequest, BenchmarkRunResponse,
+  BenchmarkRunResponse,
 } from './types';
 
 let inMemoryToken: string | null = null;

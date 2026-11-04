@@ -16,7 +16,6 @@ export const CandidateDetail: React.FC<{ candidateId: string; onBack: () => void
   const [error, setError] = useState<string | null>(null);
   const [isEvalOpen, setIsEvalOpen] = useState(false);
   const [isSignoffOpen, setIsSignoffOpen] = useState(false);
-  const [isBenchmarkOpen, setIsBenchmarkOpen] = useState(false);
   const [activeEval, setActiveEval] = useState<Evaluation | null>(null);
   const [benchmarkResult, setBenchmarkResult] = useState<BenchmarkRunResponse | null>(null);
   const loadData = async () => {
@@ -54,16 +53,13 @@ export const CandidateDetail: React.FC<{ candidateId: string; onBack: () => void
 
   const handleRunBenchmark = async () => {
     if (!candidate) return;
-    setIsBenchmarkOpen(true);
     setError(null);
     try {
       const result = await api.runBenchmark(candidate.id);
       setBenchmarkResult(result);
-      setIsBenchmarkOpen(false);
       await loadData(); // Refresh to show new evaluation
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
-      setIsBenchmarkOpen(false);
     }
   };
 
