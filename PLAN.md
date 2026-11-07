@@ -4,7 +4,7 @@ Each round completes one feature or repair. Future items are planned, not implem
 
 ## Current round
 
-continue-implementation
+policy-versioning
 
 ## Roadmap
 
@@ -21,10 +21,14 @@ Tests: `backend/tests/test_benchmark.py`, `backend/tests/test_api_workflows.py`,
 
 ### policy-versioning — Policy version management and migration
 
-Status: planned
+Status: done
 
 Acceptance:
 - CRUD API for policy versions with proper versioning
 - Policy migration endpoint for candidate re-evaluation
 - Audit trail for policy changes
+
+Implementation: `backend/app/models/models.py`, `backend/app/models/schemas.py`, `backend/app/api/policies.py`, `backend/tests/conftest.py`
+
+Tests: `backend/tests/test_api_workflows.py::test_policy_versioning_and_migration`
 

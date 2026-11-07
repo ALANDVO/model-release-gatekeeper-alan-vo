@@ -45,6 +45,24 @@ class Policy(Base):
     updated_at = Column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     evaluations = relationship("Evaluation", back_populates="policy")
+    versions = relationship("PolicyVersion", back_populates="policy", cascade="all, delete-orphan", order_by="PolicyVersion.version_number.desc()")
+
+
+class PolicyVersion(Base):
+    __tablename__ = "policy_versions"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    policy_id = Column(String(36), ForeignKey("policies.id"), nullable=False, index=True)
+    version_number = Column(Integer, nullable=False)
+    name = Column(String(120), nullable=False)
+    task_type = Column(String(50), nullable=False)
+    description = Column(Text, nullable=False, default="")
+    rules = Column(Text, nullable=False, default="[]")
+    is_default = Column(Boolean, nullable=False, default=False)
+    created_by = Column(String(100), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    change_summary = Column(Text, nullable=False, default="")
+
+    policy = relationship("Policy", back_populates="versions")
 
 
 class Evaluation(Base):

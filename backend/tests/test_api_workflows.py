@@ -283,3 +283,122 @@ def test_candidate_bundle_export_import(
     actions = [l["action"] for l in logs]
     assert "BUNDLE_EXPORTED" in actions
     assert "BUNDLE_IMPORTED" in actions
+def test_policy_versioning_and_migration(
+    client: TestClient,
+    analyst_token: str,
+    admin_token: str,
+    viewer_token: str
+):
+    """Test policy version history and evaluation migration."""
+    admin_headers = {"Authorization": f"Bearer {admin_token}"}
+    analyst_headers = {"Authorization": f"Bearer {analyst_token}"}
+    viewer_headers = {"Authorization": f"Bearer {viewer_token}"}
+
+    # 1. Create a candidate
+    cand_payload = {
+        "name": "version-test-model",
+        "version": "1.0.0",
+        "task_type": "text-generation",
+        "base_model": "gpt-base",
+        "artifact_uri": "s3://bucket/version-test",
+        "artifact_hash": "abcd1234" * 8,
+        "description": "Model for versioning test",
+        "tags": ["versioning"],
+    }
+    cand_resp = client.post("/api/candidates", json=cand_payload, headers=analyst_headers)
+    assert cand_resp.status_code == 201
+    candidate_id = cand_resp.json()["id"]
+
+    # 2. Create initial policy
+    policy_payload = {
+        "name": "versioning-test-policy",
+        "task_type": "text-generation",
+        "description": "Initial policy for versioning test",
+        "rules": [
+            {"metric_name": "accuracy", "operator": ">=", "threshold": 0.8, "severity": "blocker", "tolerance": 0.01, "description": "Min accuracy"},
+            {"metric_name": "latency_ms", "operator": "<=", "threshold": 100, "severity": "warning", "tolerance": 5, "description": "Max latency"},
+        ],
+        "is_default": True,
+    }
+    pol_resp = client.post("/api/policies", json=policy_payload, headers=admin_headers)
+    assert pol_resp.status_code == 201
+    policy_id = pol_resp.json()["id"]
+    assert pol_resp.json()["version"] == 1
+
+    # 3. Run initial evaluation (should pass)
+    eval_payload = {
+        "candidate_id": candidate_id,
+        "policy_id": policy_id,
+        "benchmark_dataset": "test-benchmark",
+        "dataset_hash": "hash123",
+        "metrics": {"accuracy": 0.85, "latency_ms": 50},
+    }
+    eval_resp = client.post("/api/evaluations", json=eval_payload, headers=analyst_headers)
+    assert eval_resp.status_code == 201
+    eval_data = eval_resp.json()
+    evaluation_id = eval_data["id"]
+    assert eval_data["gate_verdict"] == "APPROVED_FOR_RELEASE"
+
+    # 4. Update policy (creates version 1 history)
+    update_payload = {
+        "rules": [
+            {"metric_name": "accuracy", "operator": ">=", "threshold": 0.9, "severity": "blocker", "tolerance": 0.01, "description": "Higher accuracy"},
+            {"metric_name": "latency_ms", "operator": "<=", "threshold": 100, "severity": "warning", "tolerance": 5, "description": "Max latency"},
+        ],
+    }
+    update_resp = client.put(f"/api/policies/{policy_id}", json=update_payload, headers=admin_headers)
+    assert update_resp.status_code == 200
+    assert update_resp.json()["version"] == 2
+
+    # 5. Check version history
+    versions_resp = client.get(f"/api/policies/{policy_id}/versions", headers=viewer_headers)
+    assert versions_resp.status_code == 200
+    versions = versions_resp.json()
+    assert len(versions) == 1  # version 1 history
+    assert versions[0]["version_number"] == 1
+    assert versions[0]["rules"][0]["threshold"] == 0.8  # Old threshold
+
+    # 6. Get specific version
+    v1_resp = client.get(f"/api/policies/{policy_id}/versions/1", headers=viewer_headers)
+    assert v1_resp.status_code == 200
+    assert v1_resp.json()["version_number"] == 1
+
+    # 7. Run evaluation with new policy (should fail due to higher accuracy threshold)
+    eval_payload_v2 = {
+        "candidate_id": candidate_id,
+        "policy_id": policy_id,
+        "benchmark_dataset": "test-benchmark",
+        "dataset_hash": "hash123",
+        "metrics": {"accuracy": 0.85, "latency_ms": 50},
+    }
+    eval_resp_v2 = client.post("/api/evaluations", json=eval_payload_v2, headers=analyst_headers)
+    assert eval_resp_v2.status_code == 201
+    assert eval_resp_v2.json()["gate_verdict"] == "REJECTED"
+
+    # 8. Migrate evaluation to version 1 (should pass with old policy)
+    migrate_resp = client.post("/api/policies/migrate-evaluation", json={
+        "candidate_id": candidate_id,
+        "target_policy_version_id": versions[0]["id"],
+    }, headers=analyst_headers)
+    assert migrate_resp.status_code == 201
+    migrate_data = migrate_resp.json()
+    # The migration uses the most recent evaluation (which is the v2 REJECTED one)
+    # So previous_evaluation_id should be the v2 evaluation, not the original
+    eval_v2_id = eval_resp_v2.json()["id"]
+    assert migrate_data["previous_evaluation_id"] == eval_v2_id
+    assert migrate_data["new_evaluation_id"] != eval_v2_id
+    assert "version 1" in migrate_data["message"].lower()
+
+    # 9. Verify migrated evaluation has APPROVED verdict
+    new_eval_resp = client.get(f"/api/evaluations/{migrate_data['new_evaluation_id']}", headers=viewer_headers)
+    assert new_eval_resp.status_code == 200
+    assert new_eval_resp.json()["gate_verdict"] == "APPROVED_FOR_RELEASE"
+
+    # 10. Check audit log for migration
+    audit_resp = client.get("/api/audit", headers=viewer_headers)
+    assert audit_resp.status_code == 200
+    logs = audit_resp.json()["items"]
+    actions = [l["action"] for l in logs]
+    assert "EVALUATION_MIGRATED" in actions
+    assert "POLICY_UPDATED" in actions
+    assert "POLICY_CREATED" in actions

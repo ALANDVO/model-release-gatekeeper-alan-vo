@@ -119,7 +119,33 @@ class PolicyResponse(BaseModel):
     version: int
     created_by: str
     created_at: datetime
-    updated_at: datetime
+
+
+class PolicyVersionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    policy_id: str
+    version_number: int
+    name: str
+    task_type: str
+    description: str
+    rules: List[GateRule]
+    is_default: bool
+    created_by: str
+    created_at: datetime
+    change_summary: str
+
+
+class PolicyMigrationRequest(BaseModel):
+    candidate_id: str
+    target_policy_version_id: str
+
+
+class PolicyMigrationResponse(BaseModel):
+    candidate_id: str
+    previous_evaluation_id: Optional[str]
+    new_evaluation_id: str
+    message: str
 
 
 class EvaluationCreate(BaseModel):
