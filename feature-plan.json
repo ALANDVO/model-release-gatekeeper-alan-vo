@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_feature": "continue-implementation",
+  "current_feature": "policy-versioning",
   "features": [
     {
       "id": "continue-implementation",
@@ -30,14 +30,21 @@
     {
       "id": "policy-versioning",
       "title": "Policy version management and migration",
-      "status": "planned",
+      "status": "done",
       "acceptance": [
         "CRUD API for policy versions with proper versioning",
         "Policy migration endpoint for candidate re-evaluation",
         "Audit trail for policy changes"
       ],
-      "implementation": [],
-      "tests": []
+      "implementation": [
+        "backend/app/models/models.py",
+        "backend/app/models/schemas.py",
+        "backend/app/api/policies.py",
+        "backend/tests/conftest.py"
+      ],
+      "tests": [
+        "backend/tests/test_api_workflows.py::test_policy_versioning_and_migration"
+      ]
     }
   ]
 }
