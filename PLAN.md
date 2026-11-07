@@ -34,4 +34,4 @@ Tests: `backend/tests/test_api_workflows.py::test_policy_versioning_and_migratio
 
 ---
 
-Alan Vo · [alanvo.net](https://alanvo.net)
+Alan Vo · [alanvo.net](https://alanvo.net) · [X: @alanvoasi](https://x.com/alanvoasi)
