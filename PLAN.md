@@ -32,3 +32,6 @@ Implementation: `backend/app/models/models.py`, `backend/app/models/schemas.py`,
 
 Tests: `backend/tests/test_api_workflows.py::test_policy_versioning_and_migration`
 
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)

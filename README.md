@@ -192,3 +192,7 @@ docker compose up --build
 ---
 
 Alan Vo &lt;alanvo@gmail.com&gt; | GitHub ALANDVO
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)

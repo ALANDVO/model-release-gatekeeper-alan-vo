@@ -58,3 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Full React 19 + TypeScript + Vite frontend dashboard with interactive workflows, metrics charts, policy configuration, approval signatures, and manifest verification.
 - Comprehensive test suites crossing real HTTP boundaries, OIDC state/PKCE rejection, cryptographic hashing, and mock LLM provider adapters.
 - Docker containerization and Compose setup with Keycloak realm import and persistent volumes.
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)
