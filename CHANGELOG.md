@@ -1,9 +1,15 @@
 # Changelog
 
+## 1.5.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.4.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
 
+### Fixed
+- **Policy versioning duplicate version numbers bug**: When updating a policy's description or `is_default` flag without changing rules, version history entries were incorrectly created with the same version number, causing duplicates when rules were later updated. Now version history entries are only created when rules change (which increments the version number).
 ## 1.3.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
