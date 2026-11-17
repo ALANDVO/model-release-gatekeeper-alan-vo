@@ -1,8 +1,15 @@
 # Changelog
 
+## 1.6.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.5.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
+
+### Fixed
+- **Fixed duplicate imports in backend/app/api/evaluations.py**: Consolidated three duplicate `from app.models.schemas import` statements into a single import, simplifying code and removing redundancy. All tests pass.
 
 ## 1.4.0 — work-in-progress checkpoint
 

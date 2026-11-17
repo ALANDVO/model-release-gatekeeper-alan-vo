@@ -6,12 +6,10 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import require_role, AuthenticatedUser
 from app.models.models import Evaluation, Candidate, Policy
-from app.models.schemas import EvaluationCreate, EvaluationResponse, EvaluationListResponse, RuleEvaluationResult, LLMAdvisoryRequest, LLMAdvisoryResponse
+from app.models.schemas import BenchmarkRunRequest, BenchmarkRunResponse, EvaluationCreate, EvaluationListResponse, EvaluationResponse, GateRule, LLMAdvisoryRequest, LLMAdvisoryResponse, RuleEvaluationResult
 from app.services.evaluation_service import EvaluationService
 from app.services.llm_service import LLMService
-from app.models.schemas import EvaluationCreate, EvaluationResponse, EvaluationListResponse, RuleEvaluationResult, LLMAdvisoryRequest, LLMAdvisoryResponse, BenchmarkRunRequest, BenchmarkRunResponse
 from app.services.gate_engine import GateEngine
-from app.models.schemas import GateRule
 
 
 router = APIRouter(prefix="/api/evaluations", tags=["evaluations"])
@@ -20,7 +18,6 @@ router = APIRouter(prefix="/api/evaluations", tags=["evaluations"])
 def run_builtin_benchmark(candidate_id: str, db: Session) -> tuple:
     """Run the built-in AI safety benchmark against a candidate model."""
     from app.services.gate_engine import GateEngine
-    from app.models.schemas import GateRule
     from app.models.models import Candidate
 
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
