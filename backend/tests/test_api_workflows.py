@@ -402,3 +402,55 @@ def test_policy_versioning_and_migration(
     assert "EVALUATION_MIGRATED" in actions
     assert "POLICY_UPDATED" in actions
     assert "POLICY_CREATED" in actions
+
+
+def test_policy_default_flag_switch_and_version_history(
+    client: TestClient,
+    admin_token: str,
+    viewer_token: str,
+):
+    """Switching the default flag must persist, clear the sibling default, and not create a rule version entry."""
+    admin_headers = {"Authorization": f"Bearer {admin_token}"}
+    viewer_headers = {"Authorization": f"Bearer {viewer_token}"}
+
+    def make_policy(name: str, is_default: bool) -> str:
+        resp = client.post("/api/policies", json={
+            "name": name,
+            "task_type": "policy-flag-test-task",
+            "description": "flag switching fixture",
+            "rules": [
+                {"metric_name": "accuracy", "operator": ">=", "threshold": 0.8, "severity": "blocker", "tolerance": 0.01},
+            ],
+            "is_default": is_default,
+        }, headers=admin_headers)
+        assert resp.status_code == 201, resp.text
+        return resp.json()["id"]
+
+    first_id = make_policy("flag-policy-first", True)
+    second_id = make_policy("flag-policy-second", False)
+
+    # Promote the second policy to default.
+    promote = client.put(f"/api/policies/{second_id}", json={"is_default": True}, headers=admin_headers)
+    assert promote.status_code == 200, promote.text
+    promoted = promote.json()
+    assert promoted["is_default"] is True
+    assert promoted["version"] == 1
+
+    # Demoting the first policy must take effect (regression: bulk update clobbered the target instance).
+    demote = client.put(f"/api/policies/{first_id}", json={"is_default": False}, headers=admin_headers)
+    assert demote.status_code == 200, demote.text
+    assert demote.json()["is_default"] is False
+
+    # Flag-only edits must not append policy version history (rules are unchanged).
+    versions = client.get(f"/api/policies/{first_id}/versions", headers=viewer_headers)
+    assert versions.status_code == 200
+    assert versions.json() == []
+    second_versions = client.get(f"/api/policies/{second_id}/versions", headers=viewer_headers)
+    assert second_versions.status_code == 200
+    assert second_versions.json() == []
+
+    # Exactly one policy in the task type remains default.
+    listed = client.get("/api/policies?task_type=policy-flag-test-task", headers=viewer_headers)
+    assert listed.status_code == 200
+    defaults = [p["id"] for p in listed.json() if p["is_default"]]
+    assert defaults == [second_id]
