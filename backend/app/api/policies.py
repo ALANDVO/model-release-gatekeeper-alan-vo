@@ -117,6 +117,9 @@ def update_policy(policy_id: str, policy_update: PolicyUpdate, db: Session = Dep
         changes.append("rules")
     if policy_update.is_default is not None:
         if policy_update.is_default:
+            # Clear the flag on sibling policies in this task type only. A bulk
+            # update with the default synchronization strategy would also reset
+            # the in-memory `policy` instance, dropping this request's flip.
             db.query(Policy).filter(Policy.task_type == policy.task_type, Policy.is_default == True).update({"is_default": False})
         policy.is_default = policy_update.is_default
         changes.append("is_default")
