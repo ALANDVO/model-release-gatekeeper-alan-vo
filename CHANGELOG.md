@@ -1,8 +1,14 @@
 # Changelog
 
+## 1.8.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.7.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
+### Fixed
+- **Improved version history comment in policy update endpoint**: Clarified that version history entries are created ONLY when rules change, not when `is_default` or `description` are updated without rule changes. This preserves deterministic versioning behavior.
 
 ## 1.6.0 — work-in-progress checkpoint
 
