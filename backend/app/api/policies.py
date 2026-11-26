@@ -124,7 +124,10 @@ def update_policy(policy_id: str, policy_update: PolicyUpdate, db: Session = Dep
         policy.is_default = policy_update.is_default
         changes.append("is_default")
 
-    # Create version history entry only when rules change (version increments)
+    # Create version history entry ONLY when rules are updated.
+    # The policy version number increments only when rules change;
+    # updating is_default or description without rule changes does not
+    # create a version history entry (preserves deterministic versioning).
     if "rules" in changes:
         version_entry = PolicyVersion(
             policy_id=policy.id,
